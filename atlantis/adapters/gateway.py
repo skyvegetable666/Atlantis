@@ -12,11 +12,27 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from ..contracts import Limits, ModelCallError, ModelReply, Record, Usage
+from ..message_contract import message_params_schema
 
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+def _action_schema() -> Record:
+    kinds = ["claim_task", "publish_task", "submit_task", "accept_task", "cancel_task", "send_message", "put_artifact", "run_tool", "wait"]
+    return {
+        "type": "object",
+        "properties": {"kind": {"type": "string", "enum": kinds}, "params": {"type": "object"}},
+        "required": ["kind", "params"],
+        "additionalProperties": False,
+        "oneOf": [
+            {"properties": {"kind": {"enum": ["send_message"]}, "params": message_params_schema()}},
+            {"properties": {"kind": {"enum": [kind for kind in kinds if kind != "send_message"]}}},
+        ],
+    }
+
 
 SYSTEM_PROMPT = """You are an independent resident in the Atlantis work community.
 Your objective is to earn net internal credits by delivering useful work. Choose your own
@@ -99,12 +115,7 @@ class AnthropicGatewayModel:
             )}],
             "tools": [{
                 "name": "city_action", "description": "Request one permitted city action; the city validates it before any effect.",
-                "input_schema": {
-                    "type": "object", "properties": {
-                        "kind": {"type": "string", "enum": ["claim_task", "publish_task", "submit_task", "accept_task", "cancel_task", "send_message", "put_artifact", "run_tool", "wait"]},
-                        "params": {"type": "object"},
-                    }, "required": ["kind", "params"], "additionalProperties": False,
-                },
+                "input_schema": _action_schema(),
             }],
             "tool_choice": {"type": "tool", "name": "city_action"},
         }
