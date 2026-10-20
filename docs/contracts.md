@@ -1,10 +1,47 @@
 # 接口契约 v0.1
 
-本文件记录当前原型的可执行约定，具体类型见 `atlantis/contracts.py`。进程内接口无需 HTTP；HTTP 仅提供研究者操作入口。
+本文件记录当前原型的可执行约定，具体类型见 `atlantis/contracts.py`。进程内接口无需 HTTP；HTTP 提供 Client 调用 City 的用户入口。
+
+## 顶层边界
+
+| 模块 | 接收什么 | 交付什么 | 状态归属 |
+| --- | --- | --- | --- |
+| Client | 用户输入、City 返回的状态与记录 | 配置、控制与查询请求 | 页面选择、筛选和展示状态 |
+| City | Client 请求、Resident 行动意图、工具与评测结果 | 用户视图、居民观察、动作结果 | 运行、居民身份、消息、任务、资金、成果、调用与评分的权威记录 |
+| Resident | 自身获准的 Observation 与 Limits | ModelReply(kind, params, usage) | 当前上下文构造与模型接入；运行记录由 City 保存 |
+
+City 内部包括控制器、城市内核、工具与评测适配器、存储。ResidentRuntime 只依赖 ModelPort 及数据契约。现有类名 `ExperimentController`、文件名和类型名保留，顶层模块按 Client、City、Resident 识别。
+
+## Client 与 City
+
+以下 HTTP 路径已在 `atlantis/server.py` 实现，由 City 一侧处理。Client 按需请求并展示返回结果。
+
+| 操作 | 请求 | 成功返回 |
+| --- | --- | --- |
+| 查询能力 | GET /api/capabilities | 200：live_available 与模型名称 |
+| 列举运行 | GET /api/runs | 200：运行摘要列表 |
+| 查询运行 | GET /api/runs/{id} | 200：研究者可查看的运行快照 |
+| 创建运行 | POST /api/runs，JSON 对应 RunConfig 字段 | 201：新建运行的 id |
+| 启动或继续 | POST /api/runs/{id}/start，JSON 对象 | 200：运行状态 |
+| 暂停 | POST /api/runs/{id}/pause，JSON 对象 | 200：运行状态 |
+
+失败通过 HTTP 状态和 JSON 错误信息返回。参数或 JSON 错误返回 400，创建或控制中的规则拒绝返回 409，读取不存在的运行返回 404。当前创建请求没有幂等键，结果未知时先查询已有运行；页面的重复提交保护不能代替服务端幂等。
+
+Client 通过这些请求改变系统，City 负责实际校验、调度和记账。关闭页面后，City 的后台调度继续运行；暂停由 City 停止发起新调用，已发出的调用仍需收尾。
+
+## City 与 Resident
+
+City 的控制器调用 `ResidentRuntime.decide(observation, limits)`，获得 `ModelReply(kind, params, usage)`。Resident 在 ModelPort 内完成模型调用和响应解析。
+
+- 输入：City 根据可信居民身份裁剪的观察，以及本次调用限制。
+- 输出：一个行动意图或等待意图，以及资源用量。模型返回的意图需经 City 检查后才产生状态变化。
+- 身份：City 绑定 ActorContext，并为已记录决策生成稳定的 operation_id；模型输出不决定权限。
+- 隔离：Resident 不导入 City、控制器或存储，不能读取研究者完整快照；工具请求由 City 授权和编排。
+- 失败：模型异常交回 City 记录；有已知用量时一并保存，费用未知时保留待确认。中断后结果未知的付费调用按下文规则处理。
 
 ## 调用顺序
 
-1. 控制器根据运行状态、居民状态及顺序选择居民。
+1. City 内部控制器根据运行状态、居民状态及顺序选择居民。
 2. City.observe 根据控制器提供的可信身份生成受限观察。
 3. 预留调用名额与居民内部额度，然后在事务之外调用 ResidentRuntime.decide。
 4. 记录模型结果和用量，再把结构化动作交给 City.dispatch。

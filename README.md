@@ -41,22 +41,19 @@ python3 -m unittest discover -s tests -v
 
 首个代码修复候选任务包见 [benchmarks/csv_ledger_v1/README.md](benchmarks/csv_ledger_v1/README.md)，本地工作单见 [docs/issues/001-csv-repair-task.md](docs/issues/001-csv-repair-task.md)。包内包含需求、初始项目、公开测试、独立用例与参考修复；尚未接入居民运行工具。运行 `python3 -B benchmarks/csv_ledger_v1/verify.py` 可验证材料及评分器。
 
-## 模块
+## 结构
 
-```text
-web/                  研究者界面，仅访问实验 API
-server.py             本地 HTTP 入口与后台调度循环
-controller.py         观察、决策、执行、评测的流程编排
-runtime.py            Observation -> ModelReply，无城市或存储依赖
-city.py               身份校验、动作分派、跨模块事务与事件
-domain/               任务、账户、通信、成果等规则
-contracts.py          数据契约与可替换的执行、评测、存储接口
-adapters/             脚本模型、模型网关、统计工具与独立评分
-storage.py            SQLite 事务与带版本的实验快照
-bootstrap.py          统一装配具体实现
-```
+顶层只有三个模块，分别对应用户、系统和个体：
 
-接口与失败行为见 [docs/contracts.md](docs/contracts.md)。临时实现选择见 [docs/implementation.md](docs/implementation.md)。项目目标与已确认范围见 [design.md](design.md)。
+| 模块 | 职责 |
+| --- | --- |
+| Client（客户端） | 用户配置、启停、观察和比较运行 |
+| City（城市） | 系统管理规则、通信、任务、账户和成果，并负责调度、执行、评测和存储 |
+| Resident（居民） | 个体根据获准观察调用模型，返回自主决定的行动意图 |
+
+Client 向 City 提交操作并读取结果。City 调用 Resident 的决策接口，再按规则处理返回的意图。群聊、私聊、委托和资金变化都经过 City。
+
+三个模块的当前代码对应关系见 [design.md 第 3 节](design.md#3-自顶向下的结构)。接口与失败行为见 [docs/contracts.md](docs/contracts.md)。临时实现选择见 [docs/implementation.md](docs/implementation.md)。详细规则中的待讨论部分继续保留草案状态。
 
 ## 当前边界
 
@@ -69,6 +66,8 @@ bootstrap.py          统一装配具体实现
 
 ## GitHub 开发方式
 
-本地 Git 仓库已初始化；未创建远程仓库、提交或推送。仓库包含模块 Issue 模板、PR 模板和自动测试工作流。
+代码已提交并推送到 [GitHub 仓库](https://github.com/skyvegetable666/Atlantis)。仓库包含模块 Issue 模板、PR 模板和自动测试工作流。
 
-建议每项工作先写 Issue，注明接口、约束和验收；在独立分支实现，经 PR 检查后合入。初次发布前先确定仓库名称、可见性和许可证。
+每项工作按 Issue → 分支 → PR → 自动测试 → 合并推进。Issue 说明行为、接口和验收条件；PR 展示具体修改，自动测试检查回归。
+
+本次架构文档整理的本地工作单见 [docs/issues/client-city-resident.md](docs/issues/client-city-resident.md)，可作为第一次完整开发流程的练习。
