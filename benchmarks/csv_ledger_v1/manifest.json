@@ -1,0 +1,30 @@
+{
+  "task_id": "csv-ledger-repair-v1",
+  "version": 1,
+  "status": "candidate",
+  "groups": {
+    "read": 25,
+    "sum": 25,
+    "report": 25,
+    "cli": 25
+  },
+  "files": {
+    "README.md": "c4d6e2c0dc2938cdfced50543d9656096c0e9b90cd2012571d222f4dcfdad3df",
+    "evaluator/cases.py": "423da185d04017bdf44a5fa96077575ccfee1fb2830035adf027315fd4ecdfde",
+    "evaluator/run.py": "b66d84df7d15b7c163aa7ee1a5ffe20e7c3fc55b4fac933be23cce96a5e03101",
+    "public_tests/test_examples.py": "0538660891e177d8575b092774c5cb013430024761edad2b6316ef2aceb31ee1",
+    "reference/ledgerlab/__init__.py": "e7592797ab888396c45d551b5c07044f2049f155c8a134cacb7e8d53634bff7a",
+    "reference/ledgerlab/__main__.py": "d6e977d59a0062600bd057679ab412917ec014f28d48ee5750566cb6a9f671d9",
+    "reference/ledgerlab/aggregate.py": "e1a8a8beb87915a09a2de1786a5d5c2af22228cc71d626382cc4a8399a6a836d",
+    "reference/ledgerlab/reader.py": "83828ed9954a836090b2534581cb4e95ae7bd94466a5435be9f7c8e7463a7bde",
+    "reference/ledgerlab/report.py": "d757de58130054e02314b2e77d355dc886c6fdf2cf646ab1ced0625f0622229e",
+    "starter/examples/basic.csv": "58bd156f8c299d2d4d34ce765b29e27b4a8cc977f16321e84a937555527e8488",
+    "starter/ledgerlab/__init__.py": "e7592797ab888396c45d551b5c07044f2049f155c8a134cacb7e8d53634bff7a",
+    "starter/ledgerlab/__main__.py": "3c1c13f2f30e932c525dca0ab1f06a977907bac968de181c5a16f0dc61b5750f",
+    "starter/ledgerlab/aggregate.py": "7f0706806ff8a1941cbb6390eb9471a8a2fabfee774efe0ad05e59d2065ceef7",
+    "starter/ledgerlab/reader.py": "96db341c2d3ca7caa40a2c0a9df654766cd1449ac8e7a424ac9dab4ea15b02f6",
+    "starter/ledgerlab/report.py": "e03014edd841367b01b019bf1fee574241cb302e46361af22fbc8638eeb4fbb7",
+    "task.md": "c560355b8180a2048283fba5da19e9aae53903d0685aeea5686d0a576cbf63ff",
+    "verify.py": "a1e586aa46d956c144966ac8213ace14a30425909f6c4ee6582a5025289a2d38"
+  }
+}

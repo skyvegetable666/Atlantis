@@ -1,0 +1,19 @@
+[project]
+name = "atlantis-city"
+version = "0.1.0"
+description = "A modular laboratory for agent work communities"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+atlantis = "atlantis.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["atlantis*"]
+
+[tool.setuptools.package-data]
+atlantis = ["web/*.html", "web/*.css", "web/*.js"]

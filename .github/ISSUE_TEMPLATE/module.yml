@@ -1,0 +1,24 @@
+name: 模块工作
+description: 通过接口、约束和验收定义一次实现
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 要实现的行为
+      description: 谁在什么情况下做什么，预期得到什么结果？
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: 模块与接口
+      description: 输入、输出、权限、数据归属、失败及重试行为。
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: 验收条件
+      description: 成功流程与必要失败流程，如何验证整体仍然成立？
+    validations:
+      required: true

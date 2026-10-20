@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlantis 实验台</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">
+      <span class="brand-mark">A</span>
+      <span class="brand-name">Atlantis 实验台</span>
+    </a>
+
+    <section class="sidebar-section" aria-label="切换实验">
+      <label class="field-label" for="run-select">切换实验</label>
+      <select id="run-select" aria-label="选择实验"></select>
+    </section>
+
+    <div class="divider"></div>
+
+    <details id="create-panel" class="create-panel">
+      <summary class="button secondary create-toggle">新建实验 <span aria-hidden="true">＋</span></summary>
+      <form id="create-form" class="sidebar-section">
+        <h2 class="section-title">新实验配置</h2>
+        <p class="field-hint">以下配置仅用于新实验，不会修改当前查看的实验。</p>
+
+        <label class="field-label" for="mode">运行模式</label>
+        <select id="mode">
+          <option value="demo">演示脚本（固定流程）</option>
+          <option value="live">真实模型（自主决策）</option>
+        </select>
+        <p id="model-description" class="field-hint">正在检查模型配置…</p>
+
+        <div class="form-row">
+          <div>
+            <label class="field-label" for="agents">居民人数</label>
+            <select id="agents">
+              <option value="2">2 人</option>
+              <option value="1">1 人</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="calls">步数上限</label>
+            <input id="calls" type="number" min="1" max="80" value="24" required>
+          </div>
+        </div>
+
+        <label class="field-label" for="chat">聊天权限</label>
+        <select id="chat">
+          <option value="private">允许群聊与私聊</option>
+          <option value="public">仅允许群聊</option>
+          <option value="none">禁止聊天</option>
+        </select>
+
+        <button id="create-submit" class="button primary full" type="submit">创建实验</button>
+      </form>
+    </details>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-info">
+        <div class="topbar-title-row">
+          <h1 id="run-name">加载中…</h1>
+          <span id="status" class="badge neutral">读取中</span>
+        </div>
+        <p id="run-meta" class="topbar-meta">—</p>
+      </div>
+      <div class="controls" aria-label="实验操作">
+        <button id="start" class="button primary" type="button" disabled>启动实验</button>
+        <button id="pause" class="button secondary" type="button" disabled>暂停</button>
+      </div>
+    </header>
+
+    <div id="error" class="alert error" role="alert" hidden></div>
+    <div id="notice" class="alert info" hidden></div>
+
+    <section class="metrics" aria-label="实验核心数据" id="metrics"></section>
+
+    <nav class="tabs" aria-label="内容导航">
+      <button type="button" data-view="overview" class="tab-btn selected" aria-current="page">概览</button>
+      <button type="button" data-view="tasks" class="tab-btn">任务与成果 <span id="count-tasks" class="tab-count">0</span></button>
+      <button type="button" data-view="messages" class="tab-btn">聊天记录 <span id="count-messages" class="tab-count">0</span></button>
+      <button type="button" data-view="ledger" class="tab-btn">积分与调用 <span id="count-ledger" class="tab-count">0</span></button>
+      <button type="button" data-view="events" class="tab-btn">操作日志 <span id="count-events" class="tab-count">0</span></button>
+    </nav>
+
+    <section id="overview" class="view"></section>
+    <section id="tasks" class="view" hidden></section>
+    <section id="messages" class="view" hidden></section>
+    <section id="ledger" class="view" hidden></section>
+    <section id="events" class="view" hidden></section>
+  </main>
+</body>
+</html>
