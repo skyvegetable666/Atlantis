@@ -67,6 +67,21 @@ City 的控制器调用 `ResidentRuntime.decide(observation, limits)`，获得 `
 - 隔离：私聊仅双方可见；实验通信条件由内核检查。研究者能查看完整记录。
 - 成果：保存后不可变；提交者必须拥有成果。提交时向任务发布者授予访问权限。
 
+## send_message
+
+字段规则集中定义在 `atlantis/message_contract.py`。City 从中获取允许的字段，通信模块复用其字段读取与校验，模型适配器用同一份定义生成 JSON Schema（结构规范）。
+
+| 字段 | 必需 | 约定 |
+| --- | --- | --- |
+| body | 是 | 字符串；去除首尾空白后为 1 至 8000 个字符，保存时保留原始文本 |
+| recipient | 否 | 省略或 null（空值）表示群聊；字符串表示本次运行内另一名居民的编号，用于私聊 |
+
+模型的 `city_action` schema 通过互斥分支将 `kind = send_message` 与上述参数关联；该动作只允许 body 和 recipient，body 必需。长度上限按去除首尾空白后的文本计算，因此 schema 在字段说明中表达这条规则，City 按实际字符串执行校验；原始字符串可以包含额外的首尾空白。
+
+City 绑定发送者身份，继续检查频道是否开放、收件人是否存在及是否为另一名居民。字段错误返回 invalid_params，频道禁用返回 forbidden，收件人错误返回 invalid_recipient；沿用先检查字段与正文、再检查频道、最后检查收件人的顺序。
+
+被拒绝的动作不保存消息。使用相同操作编号和相同内容重试，只返回原有消息结果；更换内容返回 idempotency_conflict。模型调用的已知 Usage（资源用量）及原型 credit 费用照常记录，schema 不保证模型总能生成有效动作。
+
 ## 执行接口
 
 | 接口 | 输入 | 返回 | 约束 |

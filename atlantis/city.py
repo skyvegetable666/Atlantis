@@ -9,12 +9,13 @@ from uuid import uuid4
 
 from .contracts import ActionRequest, ActionResult, ActorContext, Record, RuleError, RunConfig, StoragePort, Usage
 from .domain import accounts, artifacts, messaging, residents, tasks
+from .message_contract import MESSAGE_PARAMETERS
 
 ACTION_FIELDS = {
     "publish_task": {"title", "spec", "acceptance", "reward", "parent_id", "input"},
     "claim_task": {"task_id"}, "submit_task": {"task_id", "artifact_id"},
     "accept_task": {"task_id"}, "cancel_task": {"task_id"},
-    "send_message": {"recipient", "body"}, "put_artifact": {"content"},
+    "send_message": {parameter.name for parameter in MESSAGE_PARAMETERS}, "put_artifact": {"content"},
     "run_tool": {"name", "arguments"}, "wait": set(),
 }
 

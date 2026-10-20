@@ -1,4 +1,5 @@
 from ..contracts import Record, RuleError
+from ..message_contract import MESSAGE_BODY, MESSAGE_RECIPIENT
 
 
 def visible(message: Record, actor: str) -> bool:
@@ -6,12 +7,12 @@ def visible(message: Record, actor: str) -> bool:
 
 
 def send(state: list[Record], residents: Record, mode: str, actor: str, params: Record) -> Record:
-    recipient, body = params.get("recipient"), params.get("body")
-    if not isinstance(body, str) or not 0 < len(body.strip()) <= 8000:
-        raise RuleError("invalid_params", "A message must contain between 1 and 8000 characters.")
+    body = MESSAGE_BODY.read(params)
+    recipient = params.get(MESSAGE_RECIPIENT.name)
     if mode == "none" or (recipient is not None and mode != "private"):
         raise RuleError("forbidden", "This communication channel is disabled in the experiment.")
-    if recipient is not None and (not isinstance(recipient, str) or recipient not in residents or recipient == actor):
+    recipient = MESSAGE_RECIPIENT.read(params)
+    if recipient is not None and (recipient not in residents or recipient == actor):
         raise RuleError("invalid_recipient", "Private messages require another resident in this run.")
     message = {
         "id": f"message-{len(state) + 1}", "sequence": len(state) + 1,

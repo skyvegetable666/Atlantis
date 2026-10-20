@@ -88,6 +88,72 @@ class CityTests(unittest.TestCase):
         self.assertNotIn("calls", observation)
         self.assertNotIn("scores", observation)
 
+    def test_message_fields_and_original_whitespace_are_preserved(self):
+        cases = [
+            {"body": "public"},
+            {"body": "explicit public", "recipient": None},
+            {"body": "private", "recipient": "resident-2"},
+            {"body": "x" * 8000},
+            {"body": " " * 9000 + "padded" + "\t\n"},
+            {"body": "\u001c\u2003 hello \u3000"},
+        ]
+        for params in cases:
+            with self.subTest(recipient=params.get("recipient"), length=len(params["body"])):
+                result = self.act("send_message", params)
+                self.assertEqual(result.status, "completed")
+                message = self.city.snapshot(self.run)["messages"][-1]
+                self.assertEqual(message["body"], params["body"])
+                self.assertEqual(message["recipient"], params.get("recipient"))
+                self.assertEqual(message["sender"], "resident-1")
+
+    def test_invalid_message_params_do_not_save_messages(self):
+        cases = [
+            ({}, "invalid_params"),
+            ({"message": "wrong field"}, "invalid_params"),
+            ({"body": "hello", "message": "extra"}, "invalid_params"),
+            ({"body": "hello", "sender": "resident-2"}, "invalid_params"),
+            *[({"body": body}, "invalid_params") for body in (None, False, 1, [], {}, "", " \t\n\u2003", "x" * 8001)],
+            *[({"body": "hello", "recipient": recipient}, "invalid_recipient")
+              for recipient in (False, 1, [], {}, "", "resident-1", "unknown-resident")],
+        ]
+        for index, (params, code) in enumerate(cases):
+            with self.subTest(case=index):
+                result = self.act("send_message", params)
+                self.assertEqual(result.status, "rejected")
+                self.assertEqual(result.code, code)
+                self.assertEqual(self.city.snapshot(self.run)["messages"], [])
+
+    def test_message_permissions_keep_existing_error_order(self):
+        for mode in ("none", "public", "private"):
+            run = self.city.create_run(RunConfig(chat_mode=mode))
+            self.city.set_status(run, "running")
+            context = ActorContext(run, "resident-1")
+            cases = [
+                ({"body": "hello"}, "forbidden" if mode == "none" else None),
+                ({"body": "hello", "recipient": None}, "forbidden" if mode == "none" else None),
+                ({"body": "hello", "recipient": "resident-2"}, None if mode == "private" else "forbidden"),
+                ({"body": "hello", "recipient": []}, "invalid_recipient" if mode == "private" else "forbidden"),
+                ({"body": ""}, "invalid_params"),
+                ({"body": "hello", "to": "resident-2"}, "invalid_params"),
+            ]
+            accepted = 0
+            for index, (params, code) in enumerate(cases):
+                with self.subTest(mode=mode, case=index):
+                    result = self.city.dispatch(context, ActionRequest(f"message-{index}", "send_message", params))
+                    self.assertEqual(result.status, "completed" if code is None else "rejected")
+                    self.assertEqual(result.code, code)
+                    accepted += code is None
+                    self.assertEqual(len(self.city.snapshot(run)["messages"]), accepted)
+
+    def test_message_retries_save_only_one_message(self):
+        params = {"body": "hello", "recipient": "resident-2"}
+        result = self.act("send_message", params, operation_id="same-message")
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(self.act("send_message", params, operation_id="same-message"), result)
+        conflict = self.act("send_message", {**params, "body": "changed"}, operation_id="same-message")
+        self.assertEqual(conflict.code, "idempotency_conflict")
+        self.assertEqual(len(self.city.snapshot(self.run)["messages"]), 1)
+
     def test_messages_remain_unread_until_decision_acknowledgement(self):
         self.act("send_message", {"recipient": "resident-2", "body": "hello"})
         context = ActorContext(self.run, "resident-2")
